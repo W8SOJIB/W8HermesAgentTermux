@@ -65,8 +65,90 @@ chmod +x install.sh
 ./install.sh
 ```
 
+---
+
+## 📱 Full Termux Step-by-Step Guide
+
+Everything command-level, from a fresh Termux install to a working agent. Run these **one by one** in Termux.
+
+### 1️⃣ Set up Termux (first time)
+```bash
+# Allow external storage access (where you'll put / download files)
+termux-setup-storage
+# Grant it, then accept the storage permission popup on your phone.
+```
+
+### 2️⃣ Update all packages
+```bash
+pkg update -y
+pkg upgrade -y
+```
+
+### 3️⃣ Core packages (needed by Hermes)
+```bash
+pkg install -y proot-distro git openssh curl wget python nodejs npm
+```
+
+### 4️⃣ Build / Python toolchain
+```bash
+pkg install -y clang make rust pkg-config libffi openssl binutils build-essential
+```
+> `python` already comes with `pip`. Install these too for smooth Python builds:
+```bash
+pkg install -y python-pip python3-setuptools wheel
+```
+
+### 5️⃣ Useful extras (recommended)
+```bash
+pkg install -y nano vim ripgrep ffmpeg unzip zip tar which
+```
+
+### 6️⃣ (Optional) Proot-Distro Ubuntu
+> `proot-distro` lets you run a full Ubuntu Linux inside Termux — this is what `install.sh` uses.
+```bash
+pkg install -y proot-distro
+proot-distro install ubuntu
+proot-distro login ubuntu
+```
+> If it says `container 'ubuntu' already exists`, just run `proot-distro login ubuntu` — it's already there. ✅
+
+### 7️⃣ Run W8HermesAgentTermux (one command does it all)
+```bash
+curl -fsSL https://raw.githubusercontent.com/W8SOJIB/W8HermesAgentTermux/main/install.sh | bash
+```
+
+### 8️⃣ Start Hermes
+```bash
+# log into the container (uses 'ubuntu' by default)
+proot-distro login ubuntu
+
+# first-time setup
+hermes setup
+
+# start chatting
+hermes
+```
+
+### 🔁 Every package the installer pulls in, at a glance
+
+| Purpose | Command |
+|:--------|:--------|
+| Base update | `pkg update -y && pkg upgrade -y` |
+| Storage access | `termux-setup-storage` |
+| Git | `pkg install -y git` |
+| proot-distro (Ubuntu) | `pkg install -y proot-distro` |
+| Python | `pkg install -y python` |
+| Node.js | `pkg install -y nodejs` |
+| Compiler toolchain | `pkg install -y clang make rust pkg-config libffi openssl build-essential` |
+| Search/copy/edit | `pkg install -y ripgrep ffmpeg nano unzip zip` |
+| Inside Ubuntu | `apt install -y python3 python3-pip python3-venv git curl build-essential nodejs npm` |
+
+> **Tip:** In Termux, `pkg` = `apt`. You can swap `pkg install X` for `apt install X` — both work.
+
+---
+
 ## 🤖 Start Agent
-Run these commands one by one after installling
+Run these commands one by one after installing
 ```
 cd
 proot-distro login ubuntu

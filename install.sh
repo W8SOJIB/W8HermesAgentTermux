@@ -52,17 +52,25 @@ yes | pkg upgrade -y 2>&1 || true
 echo -e "${YLW}🔧 Ensuring proot-distro is installed...${RST}"
 pkg install proot-distro -y
 
-# Install Ubuntu (check if already installed to avoid "already exists" error)
-UBUNTU_INSTALLED=false
-if proot-distro list 2>/dev/null | grep -i "ubuntu" | grep -q "Installed: yes"; then
-    UBUNTU_INSTALLED=true
-    echo -e "${GRN}✅ Ubuntu already installed in proot-distro${RST}"
-fi
+# --- Container setup: reuse any existing one, never fail on "already exists" ---
+# If a container (ubuntu, ubuntu-hermes, hermes2/3/4, ...) is already installed,
+# reuse it. If creating 'ubuntu' reports "already exists", just continue.
+DISTRO="ubuntu"
 
-if [ "$UBUNTU_INSTALLED" = false ]; then
-    echo -e "${YLW}🐧 Installing Ubuntu (this may take a few minutes)...${RST}"
-    proot-distro install ubuntu
-    echo -e "${GRN}✅ Ubuntu installed${RST}"
+for name in ubuntu ubuntu-hermes hermes2 hermes3 hermes4 hermes; do
+    if proot-distro list 2>/dev/null | grep -iE "^[[:space:]]*$name([[:space:]]|$)" | grep -qiE "yes|installed"; then
+        DISTRO="$name"
+        echo -e "${GRN}✅ Reusing existing container: ${name}${RST}"
+        break
+    fi
+done
+
+if [ "$DISTRO" = "ubuntu" ]; then
+    echo -e "${YLW}🐧 Checking Ubuntu container...${RST}"
+    if ! proot-distro install ubuntu 2>&1; then
+        echo -e "${YLW}⚠️  Container 'ubuntu' already exists or install reported an issue — reusing it.${RST}"
+    fi
+    echo -e "${GRN}✅ Ubuntu container ready${RST}"
 fi
 
 # Write the inner install script to a temp file to avoid quoting hell
@@ -152,7 +160,7 @@ echo -e "${YLW}🚀 Running installation inside Ubuntu...${RST}"
 echo -e "${YLW}   (This may take 5–15 minutes depending on your connection)${RST}"
 echo ""
 
-if ! proot-distro login ubuntu -- bash "$INNER_SCRIPT"; then
+if ! proot-distro login "$DISTRO" -- bash "$INNER_SCRIPT"; then
     echo -e "${RED}❌ Installation inside Ubuntu failed${RST}"
     exit 1
 fi
@@ -163,12 +171,12 @@ echo -e "${GRN}     ✅ W8HermesAgentTermux installed successfully!"
 echo -e "${CYN}===================================================${RST}"
 echo ""
 echo -e "${YLW}🚀 Quick Start:${RST}"
-echo -e "${CYN}   proot-distro login ubuntu${RST}"
+echo -e "${CYN}   proot-distro login $DISTRO${RST}"
 echo -e "${CYN}   hermes setup      # Run first-time setup${RST}"
 echo -e "${CYN}   hermes            # Start chatting${RST}"
 echo ""
 echo -e "${YLW}📖 Manual path (if hermes command not found):${RST}"
-echo -e "${CYN}   proot-distro login ubuntu${RST}"
+echo -e "${CYN}   proot-distro login $DISTRO${RST}"
 echo -e "${CYN}   cd hermes-agent && source venv/bin/activate${RST}"
 echo -e "${CYN}   hermes${RST}"
 echo ""
