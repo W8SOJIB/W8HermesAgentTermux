@@ -174,6 +174,40 @@ hermes
 hermes gateway
 ```
 
+---
+
+## 🗑️ Uninstall (delete the tool)
+
+Removes everything W8HermesAgentTermux created: the agent, the launcher, the PATH entry, optionally the proot container, then itself.
+
+**One command:**
+```bash
+curl -fsSL https://raw.githubusercontent.com/W8SOJIB/W8HermesAgentTermux/main/uninstall.sh | bash
+```
+
+Or, if you cloned the repo:
+```bash
+cd W8HermesAgentTermux
+chmod +x uninstall.sh
+./uninstall.sh
+```
+
+**What it removes:**
+
+| Item | Removed |
+|------|:------:|
+| Hermes Agent source + venv (inside container) | ✅ |
+| `~/.local/bin/hermes` launcher | ✅ |
+| PATH line added to `~/.bashrc` | ✅ |
+| proot container `ubuntu` (asks first) | ✅* |
+| `uninstall.sh` itself + repo folder | ✅ |
+
+> **\*** It asks before deleting the whole container — if you have other apps in `ubuntu`, press `N` and it keeps the container but still removes Hermes.
+>
+> Termux itself is **never** touched. To remove Termux entirely: **Settings → Apps → Termux → Uninstall**.
+
+---
+
 ## ⚙️ System Requirements
 
 | Requirement | Minimum | Recommended |
