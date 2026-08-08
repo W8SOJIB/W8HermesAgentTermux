@@ -55,18 +55,21 @@ pkg install proot-distro -y
 # --- Container setup: reuse any existing one, never fail on "already exists" ---
 # If a container (ubuntu, ubuntu-hermes, hermes2/3/4, ...) is already installed,
 # reuse it. If creating 'ubuntu' reports "already exists", just continue.
+# Detection is directory-based (the rootfs dir is proot-distro's ground truth),
+# which is reliable across proot-distro versions.
 DISTRO="ubuntu"
+ROOTFS_DIR="${PREFIX:-/data/data/com.termux/files/usr}/var/lib/proot-distro/installed-rootfs"
 
 for name in ubuntu ubuntu-hermes hermes2 hermes3 hermes4 hermes; do
-    if proot-distro list 2>/dev/null | grep -iE "^[[:space:]]*$name([[:space:]]|$)" | grep -qiE "yes|installed"; then
+    if [ -d "$ROOTFS_DIR/$name" ]; then
         DISTRO="$name"
         echo -e "${GRN}✅ Reusing existing container: ${name}${RST}"
         break
     fi
 done
 
-if [ "$DISTRO" = "ubuntu" ]; then
-    echo -e "${YLW}🐧 Checking Ubuntu container...${RST}"
+if [ "$DISTRO" = "ubuntu" ] && [ ! -d "$ROOTFS_DIR/ubuntu" ]; then
+    echo -e "${YLW}🐧 Installing Ubuntu container (may take a few minutes)...${RST}"
     if ! proot-distro install ubuntu 2>&1; then
         echo -e "${YLW}⚠️  Container 'ubuntu' already exists or install reported an issue — reusing it.${RST}"
     fi
