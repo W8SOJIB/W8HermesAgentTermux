@@ -140,24 +140,29 @@ if [ -d "venv" ]; then
 fi
 
 "$PYBIN" -m venv venv || { echo "❌ venv creation failed"; exit 1; }
-# === IMPORTANT: use the venv's OWN python for pip, NOT the uv-managed system
-# python. uv python is PEP-668 "externally managed" and rejects pip installs.
-# Inside the venv we are allowed to install anything. ===
-PYBIN="$PWD/venv/bin/python"
-[ -e "$PWD/venv/bin/pip" ] || "$PWD/venv/bin/python" -m ensurepip --upgrade >/dev/null 2>&1 || true
 source venv/bin/activate
 
+# === IMPORTANT: pip MUST target the venv python and bypass PEP-668. ===
+# The base interpreter here is uv-managed (externally-managed-environment),
+# so plain pip refuses every install. We force --break-system-packages: this
+# is 100% safe because we are inside the venv, never touching system packages.
+PIPPY="$PWD/venv/bin/python"
+if ! "$PIPPY" -m pip --version >/dev/null 2>&1; then
+    "$PIPPY" -m ensurepip --upgrade --break-system-packages >/dev/null 2>&1 || true
+fi
+pipi() { "$PIPPY" -m pip --break-system-packages "$@"; }
+
 echo "⬆️  Upgrading pip, setuptools, wheel..."
-"$PYBIN" -m pip install --upgrade pip setuptools wheel || true
+pipi install --upgrade pip setuptools wheel || true
 
 echo "🔧 Installing Hermes Agent (this can take 5–10 minutes)..."
 # Try extras in order of weight: [all] -> [termux] -> base.
 # Output is visible so any real error shows instead of silently dying.
-if ! "$PYBIN" -m pip install -e ".[all]"; then
+if ! pipi install -e ".[all]"; then
     echo "⚠️  [all] extras failed, trying [termux]..."
-    if ! "$PYBIN" -m pip install -e ".[termux]" -c constraints-termux.txt; then
+    if ! pipi install -e ".[termux]" -c constraints-termux.txt; then
         echo "⚠️  [termux] extras failed, trying base install..."
-        if ! "$PYBIN" -m pip install -e "."; then
+        if ! pipi install -e "."; then
             echo "❌ Failed to install Hermes Agent"
             echo "❌ Last error is shown above. Please share it for a fix."
             exit 1
