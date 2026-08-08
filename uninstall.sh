@@ -27,7 +27,10 @@ YLW='\033[1;33m'
 CYN='\033[0;36m'
 RST='\033[0m'
 
-clear
+export TERM="${TERM:-xterm}"
+export DEBIAN_FRONTEND=noninteractive
+export TZ=UTC
+: >/dev/tty 2>/dev/null && clear 2>/dev/null || true
 echo -e "${CYN}=====================================================${RST}"
 echo -e "${RED}       ☤ W8HermesAgentTermux UNINSTALLER ☤"
 echo -e "${CYN}=====================================================${RST}"

@@ -20,7 +20,12 @@ YLW='\033[1;33m'
 CYN='\033[0;36m'
 RST='\033[0m'
 
-clear
+# TERM may be unset when run non-interactively (curl|bash, ssh). `clear` then
+# errors out under `set -e`. Export a default so ANSI output & clear always work.
+export TERM="${TERM:-xterm}"
+export DEBIAN_FRONTEND=noninteractive
+export TZ=UTC
+: >/dev/tty 2>/dev/null && clear 2>/dev/null || true
 
 echo -e "${CYN}=====================================================${RST}"
 echo -e "${GRN}         ☤ W8HermesAgentTermux INSTALLER ☤"
