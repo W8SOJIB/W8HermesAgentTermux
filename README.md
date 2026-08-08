@@ -12,6 +12,10 @@
 [![Credit](https://img.shields.io/badge/Credit-W8Team%2FW8SOJIB-ffd93d.svg?style=for-the-badge)](https://github.com/NousResearch/hermes-agent)
 
 **Transform your Android device into a powerful, learning AI assistant**
+
+<h3 align="center">
+  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=20&duration=2800&pause=500&color=9146FF&center=true&vCenter=true&multiline=false&width=520&height=40&lines=W8HermesAgentTermux;%E2%98%A4+Hermes+Agent+for+Android;Self-evolving+AI+in+your+pocket;W8Team+%2F+W8SOJIB" alt="Typing animation" />
+</h3>
 </div>
 
 ## ✨ What is Hermes Agent?
@@ -235,6 +239,18 @@ ollama run gemma4:31b-cloud
 
 • You - For using and supporting this project! ❤️
 
+---
+
+## 🐍 Contribution Snake (animated)
+
+<img align="right" width="400" src="https://raw.githubusercontent.com/W8SOJIB/W8HermesAgentTermux/output/github-contribution-grid-snake.svg" alt="Contribution snake animation" />
+
+This little guy eats your contribution grid. It's generated automatically by a
+GitHub Action (`.github/workflows/snake.yml`) and updates every day at midnight UTC.
+
+To trigger it manually: **Actions** tab → **Generate Snake Animation** → **Run workflow**.
+
+<hr>
 
 <div align="center">
     
