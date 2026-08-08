@@ -273,19 +273,6 @@ ollama run gemma4:31b-cloud
 
 • You - For using and supporting this project! ❤️
 
----
-
-## 🐍 Contribution Snake (animated)
-
-<img align="right" width="400" src="https://raw.githubusercontent.com/W8SOJIB/W8HermesAgentTermux/output/github-contribution-grid-snake.svg" alt="Contribution snake animation" />
-
-This little guy eats your contribution grid. It's generated automatically by a
-GitHub Action (`.github/workflows/snake.yml`) and updates every day at midnight UTC.
-
-To trigger it manually: **Actions** tab → **Generate Snake Animation** → **Run workflow**.
-
-<hr>
-
 <div align="center">
     
 ## **⭐ If this helped you, give it a star! ⭐**
