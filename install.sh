@@ -151,16 +151,17 @@ source venv/bin/activate
 # - The base python is uv-managed -> PEP-668 "externally managed" blocks plain pip.
 # - The venv's own pip may be old and lack --break-system-packages.
 # `uv pip` targets the venv directly and bypasses PEP-668 entirely (its designed use).
-# Fallback: venv pip with --break-system-packages, retried without (old pip support).
+# NOTE: callers pass the full subcommand (e.g. `pipi install -e .`) — this wrapper
+# must NOT hardcode `install` or uv will treat it as a package name.
 pipi() {
     if command -v uv >/dev/null 2>&1 && [ -n "${VIRTUAL_ENV:-}" ]; then
         # activate already set $VIRTUAL_ENV; uv pip targets it, no PEP-668 issue.
-        uv pip install "$@"
+        uv pip "$@"
     elif command -v uv >/dev/null 2>&1; then
-        uv pip install --python "$PWD/venv/bin/python" "$@"
+        uv pip --python "$PWD/venv/bin/python" "$@"
     else
-        "$PWD/venv/bin/python" -m pip install --break-system-packages "$@" \
-            || "$PWD/venv/bin/python" -m pip install "$@"
+        "$PWD/venv/bin/python" -m pip --break-system-packages "$@" \
+            || "$PWD/venv/bin/python" -m pip "$@"
     fi
 }
 
