@@ -67,7 +67,7 @@ fi
 echo ""
 
 # ---- 1) Remove hermes-agent + launcher + PATH inside the container ----
-if [ -d "$ROOTFS_DIR/$DISTRO" ]; then
+if container_exists "$DISTRO"; then
     echo -e "${CYN}🧹 Removing Hermes Agent inside ${DISTRO}...${RST}"
     proot-distro login "$DISTRO" -- bash -c '
         rm -rf "$HOME/hermes-agent"
@@ -77,6 +77,9 @@ if [ -d "$ROOTFS_DIR/$DISTRO" ]; then
         sed -i '\''\#export PATH="$HOME/.local/bin:$PATH"#d'\'' "$HOME/.bashrc" 2>/dev/null || true
     '
 fi
+
+# Remove the Termux-level 'hermes' wrapper the installer created.
+rm -f "${PREFIX:-/data/data/com.termux/files/usr}/bin/hermes" 2>/dev/null || true
 
 # ---- 2) (Optional) Remove the proot container itself ----
 echo ""
@@ -88,9 +91,11 @@ if [ "$RMX" = "y" ] || [ "$RMX" = "Y" ]; then
         proot-distro remove "$DISTRO" 2>&1 || proot-distro uninstall "$DISTRO" 2>&1 || true
     else
         echo -e "${YLW}proot-distro not installed; deleting rootfs dir directly...${RST}"
-        rm -rf "$ROOTFS_DIR/$DISTRO"
+        rm -rf "$ROOTFS_DIR/containers/$DISTRO" "$ROOTFS_DIR/installed-rootfs/$DISTRO"
     fi
-    [ ! -d "$ROOTFS_DIR/$DISTRO" ] && echo -e "${GRN}✅ Container removed${RST}" || echo -e "${YLW}⚠️ container dir still present (maybe you said no / not installed)${RST}"
+    [ ! -d "$ROOTFS_DIR/containers/$DISTRO" ] && [ ! -d "$ROOTFS_DIR/installed-rootfs/$DISTRO" ] \
+        && echo -e "${GRN}✅ Container removed${RST}" \
+        || echo -e "${YLW}⚠️ container dir still present (maybe you said no / not installed)${RST}"
 else
     echo -e "${GRN}✅ Container kept.${RST}"
 fi

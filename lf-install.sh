@@ -234,24 +234,12 @@ echo -e "${CYN}===================================================${RST}"
 echo -e "${GRN}     ✅ W8HermesAgentTermux installed successfully!"
 echo -e "${CYN}===================================================${RST}"
 echo ""
-
-# Create a Termux-level 'hermes' wrapper so the command works directly from
-# Termux (no need to remember 'proot-distro login'). It autologs into the
-# container and runs the real hermes with args passed straight through.
-WRAPPER="$PREFIX/bin/hermes"
-cat > "$WRAPPER" << WRAPPER_EOF
-#!/data/data/com.termux/files/usr/bin/bash
-# W8HermesAgentTermux - Termux-level launcher for Hermes Agent
-exec proot-distro login "$DISTRO" -- bash -lc 'source ~/hermes-agent/venv/bin/activate && exec hermes "\$@"' hermes "\$@"
-WRAPPER_EOF
-chmod +x "$WRAPPER" 2>/dev/null || true
-
-echo -e "${YLW}🚀 Quick Start (from Termux, just type):${RST}"
-echo -e "${CYN}   hermes setup      # Run first-time setup  ${RST}"
-echo -e "${CYN}   hermes            # Start chatting        ${RST}"
-echo -e "${CYN}   hermes gateway    # Run the gateway       ${RST}"
+echo -e "${YLW}🚀 Quick Start:${RST}"
+echo -e "${CYN}   proot-distro login $DISTRO${RST}"
+echo -e "${CYN}   hermes setup      # Run first-time setup${RST}"
+echo -e "${CYN}   hermes            # Start chatting${RST}"
 echo ""
-echo -e "${YLW}📖 Manual path (if 'hermes' wrapper is missing):${RST}"
+echo -e "${YLW}📖 Manual path (if hermes command not found):${RST}"
 echo -e "${CYN}   proot-distro login $DISTRO${RST}"
 echo -e "${CYN}   cd hermes-agent && source venv/bin/activate${RST}"
 echo -e "${CYN}   hermes${RST}"
