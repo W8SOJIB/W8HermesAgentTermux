@@ -139,18 +139,30 @@ if [ -d "venv" ]; then
     rm -rf venv
 fi
 
-"$PYBIN" -m venv venv || { echo "❌ venv creation failed"; exit 1; }
+echo "🐍 Creating virtual environment..."
+if command -v uv >/dev/null 2>&1; then
+    uv venv --python "$PYBIN" venv || { echo "❌ venv creation failed"; exit 1; }
+else
+    "$PYBIN" -m venv venv || { echo "❌ venv creation failed"; exit 1; }
+fi
 source venv/bin/activate
 
-# === IMPORTANT: pip MUST target the venv python and bypass PEP-668. ===
-# The base interpreter here is uv-managed (externally-managed-environment),
-# so plain pip refuses every install. We force --break-system-packages: this
-# is 100% safe because we are inside the venv, never touching system packages.
-PIPPY="$PWD/venv/bin/python"
-if ! "$PIPPY" -m pip --version >/dev/null 2>&1; then
-    "$PIPPY" -m ensurepip --upgrade --break-system-packages >/dev/null 2>&1 || true
-fi
-pipi() { "$PIPPY" -m pip --break-system-packages "$@"; }
+# pip helper: prefer `uv pip` when uv is present.
+# - The base python is uv-managed -> PEP-668 "externally managed" blocks plain pip.
+# - The venv's own pip may be old and lack --break-system-packages.
+# `uv pip` targets the venv directly and bypasses PEP-668 entirely (its designed use).
+# Fallback: venv pip with --break-system-packages, retried without (old pip support).
+pipi() {
+    if command -v uv >/dev/null 2>&1 && [ -n "${VIRTUAL_ENV:-}" ]; then
+        # activate already set $VIRTUAL_ENV; uv pip targets it, no PEP-668 issue.
+        uv pip install "$@"
+    elif command -v uv >/dev/null 2>&1; then
+        uv pip install --python "$PWD/venv/bin/python" "$@"
+    else
+        "$PWD/venv/bin/python" -m pip install --break-system-packages "$@" \
+            || "$PWD/venv/bin/python" -m pip install "$@"
+    fi
+}
 
 echo "⬆️  Upgrading pip, setuptools, wheel..."
 pipi install --upgrade pip setuptools wheel || true
