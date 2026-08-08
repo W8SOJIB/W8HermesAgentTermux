@@ -140,6 +140,11 @@ if [ -d "venv" ]; then
 fi
 
 "$PYBIN" -m venv venv || { echo "❌ venv creation failed"; exit 1; }
+# === IMPORTANT: use the venv's OWN python for pip, NOT the uv-managed system
+# python. uv python is PEP-668 "externally managed" and rejects pip installs.
+# Inside the venv we are allowed to install anything. ===
+PYBIN="$PWD/venv/bin/python"
+[ -e "$PWD/venv/bin/pip" ] || "$PWD/venv/bin/python" -m ensurepip --upgrade >/dev/null 2>&1 || true
 source venv/bin/activate
 
 echo "⬆️  Upgrading pip, setuptools, wheel..."
