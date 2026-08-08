@@ -58,17 +58,28 @@ pkg install proot-distro -y
 # Detection is directory-based (the rootfs dir is proot-distro's ground truth),
 # which is reliable across proot-distro versions.
 DISTRO="ubuntu"
-ROOTFS_DIR="${PREFIX:-/data/data/com.termux/files/usr}/var/lib/proot-distro/installed-rootfs"
+ROOTFS_DIR="${PREFIX:-/data/data/com.termux/files/usr}/var/lib/proot-distro"
+
+# A container counts as installed if ANY of these is true:
+#   1) proot-distro list shows it (authoritative, format-stable)
+#   2) legacy layout: installed-rootfs/<name> exists
+#   3) new layout: containers/<name>/manifest.json + rootfs exists
+container_exists() {
+    proot-distro list 2>/dev/null | grep -qiE "^[[:space:]]*\*?[[:space:]]*$1([[:space:]]|$)" && return 0
+    [ -d "$ROOTFS_DIR/installed-rootfs/$1" ] && return 0
+    [ -f "$ROOTFS_DIR/containers/$1/manifest.json" ] && [ -d "$ROOTFS_DIR/containers/$1/rootfs" ] && return 0
+    return 1
+}
 
 for name in ubuntu ubuntu-hermes hermes2 hermes3 hermes4 hermes; do
-    if [ -d "$ROOTFS_DIR/$name" ]; then
+    if container_exists "$name"; then
         DISTRO="$name"
         echo -e "${GRN}✅ Reusing existing container: ${name}${RST}"
         break
     fi
 done
 
-if [ "$DISTRO" = "ubuntu" ] && [ ! -d "$ROOTFS_DIR/ubuntu" ]; then
+if [ "$DISTRO" = "ubuntu" ] && ! container_exists "ubuntu"; then
     echo -e "${YLW}🐧 Installing Ubuntu container (may take a few minutes)...${RST}"
     if ! proot-distro install ubuntu 2>&1; then
         echo -e "${YLW}⚠️  Container 'ubuntu' already exists or install reported an issue — reusing it.${RST}"

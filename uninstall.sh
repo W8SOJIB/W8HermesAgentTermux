@@ -41,9 +41,15 @@ export TZ=UTC
 
 # ---- Detect the container the installer used ----
 DISTRO="ubuntu"
-ROOTFS_DIR="${PREFIX:-/data/data/com.termux/files/usr}/var/lib/proot-distro/installed-rootfs"
+ROOTFS_DIR="${PREFIX:-/data/data/com.termux/files/usr}/var/lib/proot-distro"
+container_exists() {
+    proot-distro list 2>/dev/null | grep -qiE "^[[:space:]]*\*?[[:space:]]*$1([[:space:]]|$)" && return 0
+    [ -d "$ROOTFS_DIR/installed-rootfs/$1" ] && return 0
+    [ -f "$ROOTFS_DIR/containers/$1/manifest.json" ] && [ -d "$ROOTFS_DIR/containers/$1/rootfs" ] && return 0
+    return 1
+}
 for name in ubuntu ubuntu-hermes hermes2 hermes3 hermes4 hermes; do
-    if [ -d "$ROOTFS_DIR/$name" ]; then DISTRO="$name"; break; fi
+    if container_exists "$name"; then DISTRO="$name"; break; fi
 done
 echo -e "${YLW}Target container: ${DISTRO}${RST}"
 echo ""
