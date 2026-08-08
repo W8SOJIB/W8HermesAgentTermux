@@ -139,19 +139,24 @@ if [ -d "venv" ]; then
     rm -rf venv
 fi
 
-"$PYBIN" -m venv venv
+"$PYBIN" -m venv venv || { echo "❌ venv creation failed"; exit 1; }
 source venv/bin/activate
 
 echo "⬆️  Upgrading pip, setuptools, wheel..."
-"$PYBIN" -m pip install --upgrade pip setuptools wheel >/dev/null 2>&1
+"$PYBIN" -m pip install --upgrade pip setuptools wheel || true
 
 echo "🔧 Installing Hermes Agent (this can take 5–10 minutes)..."
-# Try the official full extras first, fall back to base install
-if ! "$PYBIN" -m pip install -e ".[all]" >/dev/null 2>&1; then
-    echo "⚠️  Full extras install failed, trying base install..."
-    if ! "$PYBIN" -m pip install -e "."; then
-        echo "❌ Failed to install Hermes Agent"
-        exit 1
+# Try extras in order of weight: [all] -> [termux] -> base.
+# Output is visible so any real error shows instead of silently dying.
+if ! "$PYBIN" -m pip install -e ".[all]"; then
+    echo "⚠️  [all] extras failed, trying [termux]..."
+    if ! "$PYBIN" -m pip install -e ".[termux]" -c constraints-termux.txt; then
+        echo "⚠️  [termux] extras failed, trying base install..."
+        if ! "$PYBIN" -m pip install -e "."; then
+            echo "❌ Failed to install Hermes Agent"
+            echo "❌ Last error is shown above. Please share it for a fix."
+            exit 1
+        fi
     fi
 fi
 
