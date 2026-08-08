@@ -1,0 +1,82 @@
+#!/data/data/com.termux/files/usr/bin/bash
+#
+# =============================================================
+#   ☤ W8HermesAgentTermux — Hermes Agent Installer (Termux)
+#   Tool:  W8HermesAgentTermux
+#   Credit: W8Team / W8SOJIB
+#   Repo:  https://github.com/W8SOJIB/W8HermesAgentTermux
+# =============================================================
+#
+# Usage in Termux:
+#   curl -fsSL https://raw.githubusercontent.com/W8SOJIB/W8HermesAgentTermux/main/install.sh | bash
+#
+
+set -euo pipefail
+
+# Colors
+RED='\033[0;31m'
+GRN='\033[0;32m'
+YLW='\033[1;33m'
+CYN='\033[0;36m'
+RST='\033[0m'
+
+clear
+
+echo -e "${CYN}=====================================================${RST}"
+echo -e "${GRN}         ☤ W8HermesAgentTermux INSTALLER ☤"
+echo -e "${CYN}=====================================================${RST}"
+echo -e "${GRN}       Tool: W8HermesAgentTermux | Credit: W8Team/W8SOJIB"
+echo -e "${CYN}=====================================================${RST}"
+echo ""
+
+# --- Termux Level Commands ---
+export DEBIAN_FRONTEND=noninteractive
+export TZ=UTC
+
+echo -e "${YLW}📦 Updating Termux packages...${RST}"
+# Prevent Android from killing Termux while installing
+termux-wake-lock 2>/dev/null || true
+
+# Feed 'y' from yes in case apt asks for anything despite -y
+if ! yes | pkg update -y 2>&1; then
+    echo -e "${YLW}⚠️  pkg update returned an error.${RST}"
+    echo -e "${YLW}   Trying apt --fix-broken install...${RST}"
+    apt --fix-broken install -y 2>&1 || true
+    echo -e "${YLW}   Retrying pkg update...${RST}"
+    yes | pkg update -y 2>&1 || true
+fi
+
+echo -e "${YLW}📦 Upgrading Termux packages...${RST}"
+yes | pkg upgrade -y 2>&1 || true
+
+echo -e "${YLW}🔧 Ensuring proot-distro is installed...${RST}"
+pkg install proot-distro -y
+
+# --- Container setup: reuse any existing one, never fail on "already exists" ---
+# If a container (ubuntu, ubuntu-hermes, hermes2/3/4, ...) is already installed,
+# reuse it. If creating 'ubuntu' reports "already exists", just continue.
+# Detection is directory-based (the rootfs dir is proot-distro's ground truth),
+# which is reliable across proot-distro versions.
+DISTRO="ubuntu"
+ROOTFS_DIR="${PREFIX:-/data/data/com.termux/files/usr}/var/lib/proot-distro/installed-rootfs"
+
+for name in ubuntu ubuntu-hermes hermes2 hermes3 hermes4 hermes; do
+    if [ -d "$ROOTFS_DIR/$name" ]; then
+        DISTRO="$name"
+        echo -e "${GRN}✅ Reusing existing container: ${name}${RST}"
+        break
+    fi
+done
+
+if [ "$DISTRO" = "ubuntu" ] && [ ! -d "$ROOTFS_DIR/ubuntu" ]; then
+    echo -e "${YLW}🐧 Installing Ubuntu container (may take a few minutes)...${RST}"
+    if ! proot-distro install ubuntu 2>&1; then
+        echo -e "${YLW}⚠️  Container 'ubuntu' already exists or install reported an issue — reusing it.${RST}"
+    fi
+    echo -e "${GRN}✅ Ubuntu container ready${RST}"
+fi
+
+# Write the inner install script to a temp file to avoid quoting hell
+INNER_SCRIPT=$(mktemp)
+trap 'rm -f "$INNER_SCRIPT"' EXIT
+

@@ -99,6 +99,23 @@ apt-get install -y -o Dpkg::Options::="--force-confold" \
     libffi-dev libssl-dev pkg-config \
     ca-certificates >/dev/null 2>&1
 
+# --- Auto-fix: hermes-agent requires Python >=3.11 and <3.14 ---
+# Ubuntu 25.10+ ships Python 3.14, which hermes-agent rejects. Detect the
+# default Python version and, if too new, install Python 3.13 automatically
+# via uv standalone builds (works on any Ubuntu release, no PPA needed).
+PYBIN="python3"
+if "$PYBIN" -c 'import sys; sys.exit(0 if (3, 11) <= sys.version_info < (3, 14) else 1)' 2>/dev/null; then
+    echo "✅ Default Python is compatible: $("$PYBIN" --version 2>&1)"
+else
+    echo "⚠️  hermes-agent needs Python <3.14 — installing Python 3.13 via uv..."
+    curl -LsSf https://astral.sh/uv/install.sh | sh >/dev/null 2>&1 || true
+    export PATH="$HOME/.local/bin:$PATH"
+    command -v uv >/dev/null 2>&1 || python3 -m pip install uv >/dev/null 2>&1 || true
+    uv python install 3.13 >/dev/null 2>&1 || true
+    PYBIN="$(uv python find 3.13 2>/dev/null || echo python3)"
+    echo "✅ Using $("$PYBIN" --version 2>&1)"
+fi
+
 REPO_DIR="$HOME/hermes-agent"
 
 # Clone or update repository
@@ -122,17 +139,17 @@ if [ -d "venv" ]; then
     rm -rf venv
 fi
 
-python3 -m venv venv
+"$PYBIN" -m venv venv
 source venv/bin/activate
 
 echo "⬆️  Upgrading pip, setuptools, wheel..."
-python3 -m pip install --upgrade pip setuptools wheel >/dev/null 2>&1
+"$PYBIN" -m pip install --upgrade pip setuptools wheel >/dev/null 2>&1
 
 echo "🔧 Installing Hermes Agent (this can take 5–10 minutes)..."
 # Try the official full extras first, fall back to base install
-if ! python3 -m pip install -e ".[all]" >/dev/null 2>&1; then
+if ! "$PYBIN" -m pip install -e ".[all]" >/dev/null 2>&1; then
     echo "⚠️  Full extras install failed, trying base install..."
-    if ! python3 -m pip install -e "."; then
+    if ! "$PYBIN" -m pip install -e "."; then
         echo "❌ Failed to install Hermes Agent"
         exit 1
     fi
